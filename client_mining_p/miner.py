@@ -4,6 +4,7 @@ import requests
 import sys
 import json
 
+coins = 0
 
 def proof_of_work(block):
     """
@@ -13,10 +14,14 @@ def proof_of_work(block):
     in an effort to find a number that is a valid proof
     :return: A valid proof for the provided block
     """
-    pass
+    string_object = json.dumps(block, sort_keys=True)
+    proof = 0
+    while not valid_proof(string_object, proof)[0]:
+          proof += 1
+    return proof
 
 
-def valid_proof(block_string, proof):
+def valid_proof(string_object, proof):
     """
     Validates the Proof:  Does hash(block_string, proof) contain 6
     leading zeroes?  Return true if the proof is valid
@@ -27,7 +32,9 @@ def valid_proof(block_string, proof):
     correct number of leading zeroes.
     :return: True if the resulting hash is a valid proof, False otherwise
     """
-    pass
+    guess = f"{string_object}{proof}".encode()
+    guess_hash = hashlib.sha256(guess).hexdigest()
+    return guess_hash[:6] == "000000", guess_hash
 
 
 if __name__ == '__main__':
@@ -55,8 +62,10 @@ if __name__ == '__main__':
             print(r)
             break
 
-        # TODO: Get the block from `data` and use it to look for a new proof
-        # new_proof = ???
+        print("Mining block:", data)
+
+        # Get the block from `data` and use it to look for a new proof
+        new_proof = proof_of_work(data)
 
         # When found, POST it to the server {"proof": new_proof, "id": id}
         post_data = {"proof": new_proof, "id": id}
@@ -64,7 +73,11 @@ if __name__ == '__main__':
         r = requests.post(url=node + "/mine", json=post_data)
         data = r.json()
 
-        # TODO: If the server responds with a 'message' 'New Block Forged'
+        # If the server responds with a 'message' 'New Block Forged'
         # add 1 to the number of coins mined and print it.  Otherwise,
         # print the message from the server.
-        pass
+        if data['message'] == 'New Block Forged':
+            coins += 1
+
+        print("Proof:", new_proof)
+        print("Coins mined:", coins)
